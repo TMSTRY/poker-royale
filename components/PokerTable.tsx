@@ -33,8 +33,8 @@ const SEAT_POS = Array.from({ length: 6 }, (_, i) => {
 });
 
 const BET_POS = SEAT_POS.map((p) => ({
-  x: 50 + (p.x - 50) * 0.52,
-  y: 50 + (p.y - 50) * 0.48,
+  x: 50 + (p.x - 50) * 0.7,
+  y: 50 + (p.y - 50) * 0.64,
 }));
 
 const HAND_PAUSE = 3000;
@@ -48,6 +48,7 @@ export default function PokerTable() {
   const [showLog, setShowLog] = useState(false);
   const [thinkMs, setThinkMs] = useState(1200);
 
+  const areaRef = useRef<HTMLDivElement | null>(null);
   const tableRef = useRef<HTMLDivElement | null>(null);
 
   /* ---------- opstart ---------- */
@@ -64,19 +65,30 @@ export default function PokerTable() {
   /* ---------- schaal van de tafel ---------- */
 
   useEffect(() => {
-    const el = tableRef.current;
-    if (!el) return;
+    const area = areaRef.current;
+    const table = tableRef.current;
+    if (!area || !table) return;
+    // De tafel krijgt een expliciete maat: de grootste rechthoek met de juiste
+    // verhouding die nog in de beschikbare ruimte past.
     const apply = () => {
-      const r = el.getBoundingClientRect();
+      const r = area.getBoundingClientRect();
+      if (r.width < 2 || r.height < 2) return;
       const portrait = r.height > r.width;
-      const u = portrait
-        ? Math.min(r.width / 64, r.height / 76)
-        : Math.min(r.width / 100, r.height / 58);
-      el.style.setProperty("--u", `${u}px`);
+      const ratio = portrait ? 5 / 7 : 8 / 5;
+      let w = r.width;
+      let h = w / ratio;
+      if (h > r.height) {
+        h = r.height;
+        w = h * ratio;
+      }
+      table.style.width = `${w}px`;
+      table.style.height = `${h}px`;
+      const u = portrait ? Math.min(w / 64, h / 76) : Math.min(w / 100, h / 58);
+      table.style.setProperty("--u", `${u}px`);
     };
     apply();
     const ro = new ResizeObserver(apply);
-    ro.observe(el);
+    ro.observe(area);
     return () => ro.disconnect();
   }, [started]);
 
@@ -386,7 +398,7 @@ export default function PokerTable() {
         </div>
       </header>
 
-      <div className="table-area">
+      <div className="table-area" ref={areaRef}>
         <div className="table" ref={tableRef}>
           <div className="felt">
             <div className="felt-glow" aria-hidden />

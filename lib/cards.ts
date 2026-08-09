@@ -88,11 +88,16 @@ export function shuffle<T>(arr: T[]): T[] {
   return arr;
 }
 
+/** compacte notatie: 10 wordt T, zodat "T3" niet als "103" leest */
+function short(r: number): string {
+  return r === 10 ? "T" : RANK_LABEL[r];
+}
+
 /** "A♠ K♠" -> korte omschrijving van startkaarten */
 export function describeHole(hole: Card[]): string {
   if (hole.length !== 2) return "";
   const [a, b] = hole[0].r >= hole[1].r ? hole : [hole[1], hole[0]];
-  if (a.r === b.r) return `pocket ${RANK_LABEL[a.r]}'s`;
+  if (a.r === b.r) return `pocket ${short(a.r)}'s`;
   const suited = a.s === b.s ? " suited" : " offsuit";
-  return `${RANK_LABEL[a.r]}${RANK_LABEL[b.r]}${suited}`;
+  return `${short(a.r)}${short(b.r)}${suited}`;
 }
