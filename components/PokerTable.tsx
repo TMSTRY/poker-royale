@@ -27,18 +27,27 @@ import Controls from "./Controls";
 import ChipStack from "./ChipStack";
 import PlayingCard from "./PlayingCard";
 
-const SEAT_POS = Array.from({ length: 6 }, (_, i) => {
-  const a = ((90 + i * 60) * Math.PI) / 180;
-  return { x: 50 + 40 * Math.cos(a), y: 50 + (i === 0 ? 34 : 37) * Math.sin(a) };
-});
+type Pos = { x: number; y: number };
 
-// inzetten liggen op een kleinere ellips; de held krijgt een vaste plek naast
-// zijn kaarten, anders verdwijnen zijn chips erachter
-const BET_POS = SEAT_POS.map((p, i) =>
-  i === 0
-    ? { x: 36, y: 80 }
-    : { x: 50 + (p.x - 50) * 0.66, y: 50 + (p.y - 50) * 0.66 }
-);
+/** Zes stoelen rond een ellips, de held onderaan. Staand scherm is smaller,
+ *  dus dan liggen de zijkanten dichter naar het midden. */
+function seatPositions(portrait: boolean): Pos[] {
+  const rx = portrait ? 34 : 40;
+  return Array.from({ length: 6 }, (_, i) => {
+    const a = ((90 + i * 60) * Math.PI) / 180;
+    return { x: 50 + rx * Math.cos(a), y: 50 + (i === 0 ? 34 : 37) * Math.sin(a) };
+  });
+}
+
+/** Inzetten liggen op een kleinere ellips. De held en de speler bovenaan
+ *  krijgen een vaste plek náást hun kaarten, anders vallen de chips erachter. */
+function betPositions(seats: Pos[]): Pos[] {
+  return seats.map((p, i) => {
+    if (i === 0) return { x: 36, y: 80 };
+    if (i === 3) return { x: 66, y: 20 };
+    return { x: 50 + (p.x - 50) * 0.66, y: 50 + (p.y - 50) * 0.66 };
+  });
+}
 
 const HAND_PAUSE = 3000;
 
@@ -50,6 +59,10 @@ export default function PokerTable() {
   const [stats, setStats] = useState<Stats>(EMPTY_STATS);
   const [showLog, setShowLog] = useState(false);
   const [thinkMs, setThinkMs] = useState(1200);
+  const [portrait, setPortrait] = useState(false);
+
+  const seatPos = useMemo(() => seatPositions(portrait), [portrait]);
+  const betPos = useMemo(() => betPositions(seatPos), [seatPos]);
 
   const areaRef = useRef<HTMLDivElement | null>(null);
   const tableRef = useRef<HTMLDivElement | null>(null);
@@ -77,6 +90,7 @@ export default function PokerTable() {
       const r = area.getBoundingClientRect();
       if (r.width < 2 || r.height < 2) return;
       const portrait = r.height > r.width;
+      setPortrait(portrait);
       const ratio = portrait ? 5 / 7 : 8 / 5;
       let w = r.width;
       let h = w / ratio;
@@ -439,7 +453,7 @@ export default function PokerTable() {
               <div
                 key={`bet-${p.id}`}
                 className="bet-spot"
-                style={{ left: `${BET_POS[i].x}%`, top: `${BET_POS[i].y}%` }}
+                style={{ left: `${betPos[i].x}%`, top: `${betPos[i].y}%` }}
               >
                 <ChipStack amount={p.bet} />
               </div>
@@ -450,7 +464,7 @@ export default function PokerTable() {
             <Seat
               key={p.id}
               player={p}
-              pos={SEAT_POS[i]}
+              pos={seatPos[i]}
               isTurn={game.turn === i && game.stage !== "handover"}
               isDealer={game.dealer === i}
               revealCards={revealAll && !p.folded}
