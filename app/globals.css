@@ -409,8 +409,8 @@ kbd {
 }
 
 .board-ph {
-  width: calc(var(--u) * 7.8);
-  height: calc(var(--u) * 10.9);
+  width: calc(var(--u) * 7.4);
+  height: calc(var(--u) * 10.3);
   border-radius: calc(var(--u) * 1);
   border: 1px dashed rgba(255, 255, 255, 0.12);
   background: rgba(0, 0, 0, 0.12);
@@ -551,7 +551,7 @@ kbd {
   background: linear-gradient(180deg, rgba(14, 24, 20, 0.95), rgba(6, 12, 10, 0.95));
   border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 calc(var(--u) * 0.6) calc(var(--u) * 1.6) rgba(0, 0, 0, 0.55);
-  min-width: calc(var(--u) * 17);
+  min-width: calc(var(--u) * 15);
 }
 
 .seat-av {
@@ -750,12 +750,12 @@ kbd {
   height: calc(var(--u) * 7.9);
 }
 .pc-md {
-  width: calc(var(--u) * 8.4);
-  height: calc(var(--u) * 11.8);
+  width: calc(var(--u) * 7.6);
+  height: calc(var(--u) * 10.6);
 }
 .pc-lg {
-  width: calc(var(--u) * 7.8);
-  height: calc(var(--u) * 10.9);
+  width: calc(var(--u) * 7.4);
+  height: calc(var(--u) * 10.3);
 }
 
 .pc-inner {

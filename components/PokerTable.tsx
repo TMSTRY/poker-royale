@@ -29,13 +29,16 @@ import PlayingCard from "./PlayingCard";
 
 const SEAT_POS = Array.from({ length: 6 }, (_, i) => {
   const a = ((90 + i * 60) * Math.PI) / 180;
-  return { x: 50 + 40 * Math.cos(a), y: 50 + 37 * Math.sin(a) };
+  return { x: 50 + 40 * Math.cos(a), y: 50 + (i === 0 ? 34 : 37) * Math.sin(a) };
 });
 
-const BET_POS = SEAT_POS.map((p) => ({
-  x: 50 + (p.x - 50) * 0.7,
-  y: 50 + (p.y - 50) * 0.64,
-}));
+// inzetten liggen op een kleinere ellips; de held krijgt een vaste plek naast
+// zijn kaarten, anders verdwijnen zijn chips erachter
+const BET_POS = SEAT_POS.map((p, i) =>
+  i === 0
+    ? { x: 36, y: 80 }
+    : { x: 50 + (p.x - 50) * 0.66, y: 50 + (p.y - 50) * 0.66 }
+);
 
 const HAND_PAUSE = 3000;
 
