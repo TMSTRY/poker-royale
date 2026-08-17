@@ -13,6 +13,8 @@ type Props = {
   highlight: string[];
   dealToken: number;
   thinkMs: number;
+  /** tafelpraat van deze speler, of null */
+  says: string | null;
 };
 
 export default function Seat({
@@ -25,6 +27,7 @@ export default function Seat({
   highlight,
   dealToken,
   thinkMs,
+  says,
 }: Props) {
   const showFace = p.human || revealCards;
   const cls = [
@@ -78,6 +81,12 @@ export default function Seat({
           </div>
         )}
       </div>
+
+      {says && (
+        <div className="seat-says" key={says}>
+          {says}
+        </div>
+      )}
 
       {p.lastAction && !p.out && (
         <div className={`seat-bubble ${p.lastAction === "Fold" ? "is-fold" : ""}`}>

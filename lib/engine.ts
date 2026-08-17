@@ -1,5 +1,6 @@
 import { Card, cardLabel, freshDeck } from "./cards";
 import { evaluate, HandResult } from "./evaluator";
+import { hashSeed, mulberry32 } from "./rng";
 
 export type Stage =
   | "idle"
@@ -22,6 +23,46 @@ export type Personality = {
   bluff: number;
   /** hoger = strakker, speelt minder handen */
   tightness: number;
+};
+
+/** Wat de tafel over een speler heeft geleerd, binnen deze sessie. */
+export type Read = {
+  hands: number;
+  /** handen waarin vrijwillig geld in de pot ging */
+  vpip: number;
+  raises: number;
+  actions: number;
+  facedRaise: number;
+  foldToRaise: number;
+  showdowns: number;
+};
+
+export const EMPTY_READ: Read = {
+  hands: 0,
+  vpip: 0,
+  raises: 0,
+  actions: 0,
+  facedRaise: 0,
+  foldToRaise: 0,
+  showdowns: 0,
+};
+
+export type GameConfig = {
+  startStack: number;
+  handsPerLevel: number;
+  /** 0.8 = slordige bots, 1.35 = scherpe bots */
+  skill: number;
+  /** vast zaadje voor de dagchallenge, of null voor willekeurig */
+  seed: number | null;
+  tierId: string;
+};
+
+export const DEFAULT_CONFIG: GameConfig = {
+  startStack: 2000,
+  handsPerLevel: 8,
+  skill: 1,
+  seed: null,
+  tierId: "cafe",
 };
 
 export type Player = {
@@ -47,6 +88,12 @@ export type Player = {
   delta: number;
   /** rang bij uitschakeling (6 = eerst eruit) */
   place: number | null;
+  /** wat de tafel over deze speler weet */
+  read: Read;
+  /** 0..1 — stijgt na een verloren pot, maakt tijdelijk agressiever */
+  heat: number;
+  /** heeft deze speler deze hand al vrijwillig ingezet? */
+  vpipThisHand: boolean;
 };
 
 export type PotAward = { amount: number; winners: number[]; side: boolean };
@@ -74,6 +121,9 @@ export type GameState = {
   dealer: number;
   level: number;
   handNo: number;
+  config: GameConfig;
+  /** wie het laatst verhoogde in deze hand */
+  lastAggressor: number | null;
   outcome: Outcome | null;
   log: LogEntry[];
   /** telt op zodat de UI weet wanneer er nieuwe kaarten zijn */
@@ -106,7 +156,12 @@ export function blinds(level: number) {
   return BLIND_LEVELS[Math.min(level, BLIND_LEVELS.length - 1)];
 }
 
-const BOTS: Omit<Player, "chips" | "bet" | "committed" | "hole" | "folded" | "allIn" | "out" | "hasActed" | "lastAction" | "delta" | "place">[] = [
+type BotSeed = Pick<
+  Player,
+  "id" | "name" | "avatar" | "color" | "tagline" | "human" | "personality"
+>;
+
+const BOTS: BotSeed[] = [
   {
     id: 1,
     name: "Vera",
@@ -154,45 +209,34 @@ const BOTS: Omit<Player, "chips" | "bet" | "committed" | "hole" | "folded" | "al
   },
 ];
 
-export function newGame(playerName: string): GameState {
-  const hero: Player = {
+export function newGame(playerName: string, config: GameConfig = DEFAULT_CONFIG): GameState {
+  const hero: BotSeed = {
     id: 0,
     name: playerName || "Jij",
     avatar: "😎",
     color: "#fbbf24",
     tagline: "de held",
-    chips: START_STACK,
+    human: true,
+    personality: { aggression: 0.5, bluff: 0.2, tightness: 0.5 },
+  };
+
+  const players: Player[] = [hero, ...BOTS].map((b) => ({
+    ...b,
+    chips: config.startStack,
     bet: 0,
     committed: 0,
-    hole: [],
+    hole: [] as Card[],
     folded: false,
     allIn: false,
     out: false,
     hasActed: false,
-    human: true,
-    personality: { aggression: 0.5, bluff: 0.2, tightness: 0.5 },
     lastAction: null,
     delta: 0,
-    place: null,
-  };
-
-  const players: Player[] = [
-    hero,
-    ...BOTS.map((b) => ({
-      ...b,
-      chips: START_STACK,
-      bet: 0,
-      committed: 0,
-      hole: [] as Card[],
-      folded: false,
-      allIn: false,
-      out: false,
-      hasActed: false,
-      lastAction: null,
-      delta: 0,
-      place: null as number | null,
-    })),
-  ];
+    place: null as number | null,
+    read: { ...EMPTY_READ },
+    heat: 0,
+    vpipThisHand: false,
+  }));
 
   return {
     players,
@@ -203,9 +247,14 @@ export function newGame(playerName: string): GameState {
     turn: -1,
     currentBet: 0,
     minRaise: 20,
-    dealer: Math.floor(Math.random() * players.length),
+    dealer:
+      config.seed == null
+        ? Math.floor(Math.random() * players.length)
+        : hashSeed(config.seed) % players.length,
     level: 0,
     handNo: 0,
+    config,
+    lastAggressor: null,
     outcome: null,
     log: [],
     dealToken: 0,
@@ -220,7 +269,7 @@ export function newGame(playerName: string): GameState {
 function clone(s: GameState): GameState {
   return {
     ...s,
-    players: s.players.map((p) => ({ ...p, hole: p.hole.slice() })),
+    players: s.players.map((p) => ({ ...p, hole: p.hole.slice(), read: { ...p.read } })),
     deck: s.deck.slice(),
     board: s.board.slice(),
     log: s.log.slice(),
@@ -273,6 +322,10 @@ export function startHand(prev: GameState): GameState {
     p.hasActed = false;
     p.lastAction = null;
     p.delta = 0;
+    p.vpipThisHand = false;
+    // opgebouwde frustratie zakt langzaam weg
+    p.heat = Math.max(0, p.heat * 0.72 - 0.02);
+    if (!p.out) p.read = { ...p.read, hands: p.read.hands + 1 };
   }
 
   s.board = [];
@@ -281,9 +334,14 @@ export function startHand(prev: GameState): GameState {
   s.winnerIds = [];
   s.highlight = [];
   s.collecting = false;
-  s.deck = freshDeck();
+  s.lastAggressor = null;
   s.handNo = prev.handNo + 1;
-  s.level = Math.floor((s.handNo - 1) / HANDS_PER_LEVEL);
+  // met een zaadje is elke hand exact reproduceerbaar, los van de volgorde
+  // waarin React deze functie aanroept
+  s.deck = freshDeck(
+    s.config.seed == null ? Math.random : mulberry32(hashSeed(s.config.seed, s.handNo))
+  );
+  s.level = Math.floor((s.handNo - 1) / s.config.handsPerLevel);
   s.dealToken = prev.dealToken + 1;
 
   const seats = activePlayers(s);
@@ -371,6 +429,22 @@ export function applyAction(prev: GameState, idx: number, action: Action): GameS
 
   const l = legal(s, idx);
 
+  // --- meelezen: wat leert de tafel van deze actie? ---
+  const bbNow = blinds(s.level).bb;
+  // preflop telt alleen een échte verhoging boven de big blind
+  const facingRaise =
+    l.toCall > 0 && (s.stage !== "preflop" || s.currentBet > bbNow);
+  const putsInMoney =
+    action.kind === "raise" || action.kind === "allin" || (action.kind === "call" && l.toCall > 0);
+  p.read.actions += 1;
+  if (facingRaise) p.read.facedRaise += 1;
+  if (action.kind === "fold" && facingRaise) p.read.foldToRaise += 1;
+  if (putsInMoney && !p.vpipThisHand) {
+    p.vpipThisHand = true;
+    p.read.vpip += 1;
+  }
+  if (action.kind === "raise" || action.kind === "allin") p.read.raises += 1;
+
   if (action.kind === "fold") {
     p.folded = true;
     p.hasActed = true;
@@ -413,6 +487,7 @@ export function applyAction(prev: GameState, idx: number, action: Action): GameS
     if (target > s.currentBet) {
       if (fullRaise) s.minRaise = target - s.currentBet;
       s.currentBet = target;
+      s.lastAggressor = idx;
       // inzetronde heropenen voor iedereen die nog kan handelen
       if (fullRaise) {
         for (const o of s.players) if (o.id !== p.id && canAct(o)) o.hasActed = false;
@@ -524,6 +599,7 @@ export function resolve(prev: GameState): GameState {
       const r = evaluate([...p.hole, ...s.board]);
       results.set(p.id, r);
       hands[p.id] = { name: r.name, best: r.best.map((c) => c.id) };
+      p.read.showdowns += 1;
     }
   }
 
@@ -585,6 +661,15 @@ export function resolve(prev: GameState): GameState {
   }
 
   for (const p of s.players) p.delta -= p.committed;
+
+  // een dure verloren pot maakt een speler tijdelijk agressiever
+  for (const p of s.players) {
+    const stackBefore = p.chips - p.delta;
+    if (stackBefore <= 0) continue;
+    const loss = -p.delta / stackBefore;
+    if (loss > 0.22) p.heat = Math.min(1, p.heat + 0.25 + loss * 0.5);
+    else if (p.delta > 0) p.heat = p.heat * 0.4;
+  }
 
   const winnerIds = Array.from(new Set(awards.flatMap((a) => a.winners)));
   s.winnerIds = winnerIds;

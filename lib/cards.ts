@@ -1,3 +1,5 @@
+import { Rng } from "./rng";
+
 export type Suit = "s" | "h" | "d" | "c";
 
 export type Card = {
@@ -74,13 +76,13 @@ export const FULL_DECK: Card[] = (() => {
   return deck;
 })();
 
-export function freshDeck(): Card[] {
-  return shuffle(FULL_DECK.slice());
+export function freshDeck(rng: Rng = Math.random): Card[] {
+  return shuffle(FULL_DECK.slice(), rng);
 }
 
-export function shuffle<T>(arr: T[]): T[] {
+export function shuffle<T>(arr: T[], rng: Rng = Math.random): T[] {
   for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(rng() * (i + 1));
     const t = arr[i];
     arr[i] = arr[j];
     arr[j] = t;
