@@ -265,11 +265,20 @@ export default function PokerTable() {
 
   /* ---------- volgende hand ---------- */
 
+  // De pauze na een hand schaalt bewust NIET mee met het tempo: dat regelt hoe
+  // snel de bots denken, niet hoe snel jij kunt lezen.
+  const handoverPause = note ? 8000 : 4200;
+
+  const skipHand = useCallback(() => {
+    sfx.click();
+    setGame((g) => (g.stage === "handover" ? nextHand(g) : g));
+  }, []);
+
   useEffect(() => {
     if (!started || game.stage !== "handover") return;
-    const t = setTimeout(() => setGame((g) => nextHand(g)), 3200 / sp);
+    const t = setTimeout(() => setGame((g) => nextHand(g)), handoverPause);
     return () => clearTimeout(t);
-  }, [started, game.stage, game.handNo, sp]);
+  }, [started, game.stage, game.handNo, handoverPause]);
 
   /* ---------- einde hand: pot naar de winnaar, coach, statistieken ---------- */
 
@@ -791,26 +800,25 @@ export default function PokerTable() {
       </div>
 
       <footer className="dock">
-        {note && game.stage === "handover" && (
-          <div className={`coach coach-${note.tone}`}>
+        {game.stage === "handover" && game.outcome && (
+          <div className={`coach coach-${note?.tone ?? "info"}`}>
             <span className="coach-icon">
-              {note.tone === "good" ? "✅" : note.tone === "bad" ? "⚠️" : "💡"}
+              {!note ? "🃏" : note.tone === "good" ? "✅" : note.tone === "bad" ? "⚠️" : "💡"}
             </span>
-            <span>{note.text}</span>
+            <span className="coach-text">{note ? note.text : game.outcome.headline}</span>
             {shareText && (
               <button type="button" className="coach-share" onClick={copyShare}>
                 {copied ? "gekopieerd" : "kopieer hand"}
               </button>
             )}
-          </div>
-        )}
-        {!note && game.stage === "handover" && shareText && (
-          <div className="coach coach-info">
-            <span className="coach-icon">🃏</span>
-            <span>{game.outcome?.headline}</span>
-            <button type="button" className="coach-share" onClick={copyShare}>
-              {copied ? "gekopieerd" : "kopieer hand"}
+            <button type="button" className="coach-next" onClick={skipHand}>
+              Volgende hand ▶
             </button>
+            <span
+              className="coach-timer"
+              key={`${game.handNo}:${note ? 1 : 0}`}
+              style={{ animationDuration: `${handoverPause}ms` }}
+            />
           </div>
         )}
 

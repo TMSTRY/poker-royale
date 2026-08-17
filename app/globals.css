@@ -829,66 +829,24 @@ kbd {
   transform: rotate(180deg);
 }
 
-/* --- pip-raster: 3 kolommen × 9 rijen, zoals op een echte kaart --- */
-.pc-pips {
+/* dunne binnenlijn: geeft de kaart een gedrukt randje */
+.pc-rule {
   position: absolute;
-  inset: calc(var(--u) * 1.85) calc(var(--u) * 1);
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(9, 1fr);
-  place-items: center;
-}
-.pc-pip-cell {
-  font-size: calc(var(--u) * 1.55);
-  line-height: 1;
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.16));
-}
-.pc-pip-cell.flip {
-  transform: rotate(180deg);
+  inset: calc(var(--u) * 0.42);
+  border-radius: calc(var(--u) * 0.65);
+  border: 1px solid currentColor;
+  opacity: 0.13;
+  pointer-events: none;
 }
 
-.pc-ace {
+.pc-pip {
   position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  font-size: calc(var(--u) * 4.6);
-  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.18));
-}
-
-.pc-court {
-  position: absolute;
-  inset: calc(var(--u) * 1.8) calc(var(--u) * 1.05);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: calc(var(--u) * 0.1);
-}
-.pc-court-frame {
-  position: absolute;
-  inset: 0;
-  border: calc(var(--u) * 0.16) solid currentColor;
-  border-radius: calc(var(--u) * 0.5);
-  opacity: 0.22;
-  background-image: repeating-linear-gradient(
-    45deg,
-    currentColor 0 1px,
-    transparent 1px 7px
-  );
-}
-.pc-court b {
-  position: relative;
-  font-size: calc(var(--u) * 3.2);
-  font-weight: 800;
+  left: 50%;
+  top: 53%;
+  transform: translate(-50%, -50%);
+  font-size: calc(var(--u) * 4.5);
   line-height: 1;
-  letter-spacing: -0.04em;
-}
-.pc-court i {
-  position: relative;
-  font-style: normal;
-  font-size: calc(var(--u) * 1.7);
-  line-height: 1;
+  filter: drop-shadow(0 calc(var(--u) * 0.12) calc(var(--u) * 0.2) rgba(0, 0, 0, 0.22));
 }
 
 .pc-sm .pc-corner b {
@@ -897,23 +855,8 @@ kbd {
 .pc-sm .pc-corner i {
   font-size: calc(var(--u) * 1.1);
 }
-.pc-sm .pc-pips {
-  inset: calc(var(--u) * 1.45) calc(var(--u) * 0.75);
-}
-.pc-sm .pc-pip-cell {
-  font-size: calc(var(--u) * 1.15);
-}
-.pc-sm .pc-ace {
-  font-size: calc(var(--u) * 3.4);
-}
-.pc-sm .pc-court {
-  inset: calc(var(--u) * 1.4) calc(var(--u) * 0.8);
-}
-.pc-sm .pc-court b {
-  font-size: calc(var(--u) * 2.4);
-}
-.pc-sm .pc-court i {
-  font-size: calc(var(--u) * 1.25);
+.pc-sm .pc-pip {
+  font-size: calc(var(--u) * 3.2);
 }
 
 .pc-back {
@@ -1663,17 +1606,50 @@ kbd {
 /* ============================== COACH ============================== */
 
 .coach {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 9px;
   margin: 0 2px 8px;
-  padding: 9px 12px;
+  padding: 10px 12px 11px;
   border-radius: 12px;
-  font-size: 13px;
+  font-size: 13.5px;
   line-height: 1.45;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.05);
+  overflow: hidden;
   animation: coachIn 0.32s cubic-bezier(0.2, 1.2, 0.3, 1) both;
+}
+.coach-text {
+  flex: 1;
+  min-width: 0;
+}
+.coach-next {
+  flex: none;
+  padding: 5px 11px;
+  border-radius: 8px;
+  border: 1px solid rgba(242, 193, 78, 0.45);
+  background: rgba(242, 193, 78, 0.14);
+  color: var(--gold);
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.coach-next:hover {
+  background: rgba(242, 193, 78, 0.26);
+}
+/* balkje dat laat zien hoeveel leestijd er nog is */
+.coach-timer {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: 100%;
+  transform-origin: left;
+  background: linear-gradient(90deg, rgba(242, 193, 78, 0.85), rgba(242, 193, 78, 0.25));
+  animation-name: timerDrain;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
 }
 .coach-icon {
   font-size: 15px;
@@ -1688,7 +1664,6 @@ kbd {
   background: rgba(224, 72, 63, 0.1);
 }
 .coach-share {
-  margin-left: auto;
   flex: none;
   padding: 5px 10px;
   border-radius: 8px;
