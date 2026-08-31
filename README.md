@@ -59,8 +59,9 @@ de shuffle af van de datum, dus iedereen speelt vandaag dezelfde kaarten; het
 resultaat is met één klik te kopiëren.
 
 **Presentatie**
-- Echte kaartbeelden in pure CSS: pip-raster van 3×9 per rang met de onderste
-  helft omgekeerd, één grote pip voor de aas, monogram voor boer/dame/heer
+- Kaarten in pure CSS: rang in beide hoeken, één grote suit in het midden en een
+  dunne binnenlijn. Bewust géén volledig pip-raster — op tafelformaat wordt dat
+  rommelig
 - 3D-flip bij het omdraaien, gedeald met vertraging per kaart
 - Chips glijden naar de pot aan het eind van elke inzetronde, en van de pot naar
   de winnaar
