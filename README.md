@@ -72,6 +72,7 @@ resultaat is met één klik te kopiëren.
 
 **Bediening en comfort**
 - Instelbaar tempo (traag / normaal / snel) en een bedenktijdklok (uit / 30s / 15s)
+- Pauzeknop die alles stilzet: bots, straten, de volgende hand en de klok
 - Check/Fold en Call any vooraf aanvinken terwijl de bots nog denken
 - Pot odds bij de callknop, je actuele hand in beeld, winreeks- en blindteller
 - Hand kopiëren naar het klembord om te delen
@@ -84,6 +85,7 @@ resultaat is met één klik te kopiëren.
 | `C` | check / call |
 | `R` | raise naar het ingestelde bedrag |
 | `A` | all-in |
+| `spatie` | pauze — zet de hele tafel stil |
 
 Of gewoon klikken. De schuifbalk en de knoppen ½ pot / ¾ pot / pot / all-in
 zetten je inzet.
