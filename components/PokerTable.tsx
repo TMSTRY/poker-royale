@@ -100,6 +100,7 @@ export default function PokerTable() {
   const [toasts, setToasts] = useState<{ key: number; ach: Achievement }[]>([]);
   const [auto, setAuto] = useState<"off" | "checkfold" | "callany">("off");
   const [copied, setCopied] = useState(false);
+  const [paused, setPaused] = useState(false);
 
   const areaRef = useRef<HTMLDivElement | null>(null);
   const tableRef = useRef<HTMLDivElement | null>(null);
@@ -200,7 +201,7 @@ export default function PokerTable() {
   /* ---------- spelverloop ---------- */
 
   useEffect(() => {
-    if (!started) return;
+    if (!started || paused) return;
     const s = game;
     if (s.stage === "idle" || s.stage === "handover" || s.stage === "gameover") return;
 
@@ -261,7 +262,7 @@ export default function PokerTable() {
         say(idx, "fold", 0.18);
     }, delay);
     return () => clearTimeout(t);
-  }, [game, started, sp, betPos, launch, say]);
+  }, [game, started, paused, sp, betPos, launch, say]);
 
   /* ---------- volgende hand ---------- */
 
@@ -275,10 +276,10 @@ export default function PokerTable() {
   }, []);
 
   useEffect(() => {
-    if (!started || game.stage !== "handover") return;
+    if (!started || paused || game.stage !== "handover") return;
     const t = setTimeout(() => setGame((g) => nextHand(g)), handoverPause);
     return () => clearTimeout(t);
-  }, [started, game.stage, game.handNo, handoverPause]);
+  }, [started, paused, game.stage, game.handNo, handoverPause]);
 
   /* ---------- einde hand: pot naar de winnaar, coach, statistieken ---------- */
 
@@ -540,7 +541,7 @@ export default function PokerTable() {
   const heroTurn = started && game.turn === 0 && !hero.folded && !hero.allIn && !hero.out;
 
   useEffect(() => {
-    if (!heroTurn || auto === "off") return;
+    if (!heroTurn || auto === "off" || paused) return;
     const l = legal(gameRef.current, 0);
     const t = setTimeout(() => {
       if (auto === "checkfold") act(l.canCheck ? { kind: "check" } : { kind: "fold" });
@@ -548,19 +549,19 @@ export default function PokerTable() {
       setAuto("off");
     }, 220);
     return () => clearTimeout(t);
-  }, [heroTurn, auto, act]);
+  }, [heroTurn, auto, paused, act]);
 
   /* ---------- bedenktijd ---------- */
 
   const clockKey = `${game.handNo}:${game.stage}:${game.currentBet}:${hero.bet}`;
   useEffect(() => {
-    if (!heroTurn || settings.clock <= 0 || auto !== "off") return;
+    if (!heroTurn || settings.clock <= 0 || auto !== "off" || paused) return;
     const t = setTimeout(() => {
       const l = legal(gameRef.current, 0);
       act(l.canCheck ? { kind: "check" } : { kind: "fold" });
     }, settings.clock * 1000);
     return () => clearTimeout(t);
-  }, [heroTurn, clockKey, settings.clock, auto, act]);
+  }, [heroTurn, clockKey, settings.clock, auto, paused, act]);
 
   /* ---------- starten en herstarten ---------- */
 
@@ -580,6 +581,7 @@ export default function PokerTable() {
       setIsDaily(daily);
       setGame(startHand(newGame(trimmed, cfg)));
       setStarted(true);
+      setPaused(false);
       setNote(null);
       decisionsRef.current = [];
       wasShortRef.current = false;
@@ -609,7 +611,28 @@ export default function PokerTable() {
   const backToLobby = useCallback(() => {
     setStarted(false);
     setShowSettings(false);
+    setPaused(false);
   }, []);
+
+  const togglePause = useCallback(() => {
+    sfx.click();
+    setPaused((v) => !v);
+  }, []);
+
+  // Spatiebalk pauzeert. preventDefault, anders klikt de spatie ook nog de
+  // knop aan die toevallig focus heeft.
+  useEffect(() => {
+    if (!started) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code !== "Space" && e.key !== " ") return;
+      const el = e.target as HTMLElement | null;
+      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA")) return;
+      e.preventDefault();
+      togglePause();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [started, togglePause]);
 
   const playAgain = useCallback(() => {
     if (isDaily) {
@@ -665,7 +688,7 @@ export default function PokerTable() {
   /* ---------- speelscherm ---------- */
 
   return (
-    <div className="shell playing">
+    <div className={`shell playing ${paused ? "is-paused" : ""}`}>
       <header className="hud">
         <div className="hud-left">
           <button type="button" className="hud-logo" onClick={backToLobby} title="Terug naar de lobby">
@@ -695,6 +718,14 @@ export default function PokerTable() {
           )}
         </div>
         <div className="hud-right">
+          <button
+            type="button"
+            className={`icon-btn ${paused ? "on" : ""}`}
+            onClick={togglePause}
+            title={paused ? "Verder spelen (spatie)" : "Pauze (spatie)"}
+          >
+            {paused ? "▶" : "⏸"}
+          </button>
           <button type="button" className="icon-btn" onClick={() => setShowLog((v) => !v)} title="Historiek">
             ☰
           </button>
@@ -887,10 +918,32 @@ export default function PokerTable() {
           pot={pot}
           bb={lvl.bb}
           heroBet={hero.bet}
-          active={heroTurn}
+          active={heroTurn && !paused}
           onAction={act}
         />
       </footer>
+
+      {paused && game.stage !== "gameover" && (
+        <div className="pause-wrap" onClick={togglePause}>
+          <div className="pause-card" onClick={(e) => e.stopPropagation()}>
+            <div className="pause-mark">⏸</div>
+            <h2>Pauze</h2>
+            <p>
+              Het spel staat helemaal stil: niemand deelt, geen enkele klok loopt en
+              je hand blijft precies zoals hij is.
+            </p>
+            <button type="button" className="cta" onClick={togglePause}>
+              VERDER SPELEN
+            </button>
+            <button type="button" className="link-btn" onClick={backToLobby}>
+              Naar de lobby
+            </button>
+            <span className="pause-hint">
+              of druk op <kbd>spatie</kbd>
+            </span>
+          </div>
+        </div>
+      )}
 
       {toasts.length > 0 && (
         <div className="toasts">
