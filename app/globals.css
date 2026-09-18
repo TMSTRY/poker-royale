@@ -1894,3 +1894,84 @@ kbd {
   background: rgba(242, 193, 78, 0.18);
   color: var(--gold);
 }
+
+/* ============================== ALL-IN UITROL ============================== */
+
+.allin-banner {
+  margin-top: calc(var(--u) * 0.6);
+  padding: calc(var(--u) * 0.7) calc(var(--u) * 2.2);
+  border-radius: 999px;
+  text-align: center;
+  font-size: calc(var(--u) * 2.3);
+  font-weight: 900;
+  letter-spacing: 0.22em;
+  color: #fff3f1;
+  background: linear-gradient(180deg, #e0483f, #8d1f19);
+  box-shadow: 0 calc(var(--u) * 1) calc(var(--u) * 2.5) rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  animation: allinPulse 1.5s ease-in-out infinite;
+  white-space: nowrap;
+}
+.allin-banner em {
+  display: block;
+  margin-top: calc(var(--u) * 0.15);
+  font-size: calc(var(--u) * 1.25);
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  opacity: 0.8;
+}
+
+@keyframes allinPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55), 0 0 0 0 rgba(224, 72, 63, 0.55);
+  }
+  50% {
+    transform: scale(1.035);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55), 0 0 0 calc(var(--u) * 1.4) rgba(224, 72, 63, 0);
+  }
+}
+
+.seat-eq {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 0.6);
+  margin-top: calc(var(--u) * 0.25);
+  animation: bubbleIn 0.3s cubic-bezier(0.2, 1.3, 0.3, 1) both;
+}
+.seat-eq-bar {
+  display: block;
+  width: calc(var(--u) * 9);
+  height: calc(var(--u) * 0.85);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  overflow: hidden;
+}
+.seat-eq-bar span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #f87171, #fbbf24 55%, #34d399);
+  /* de sprong na elke kaart is het hele punt, dus die mag je zien bewegen */
+  transition: width 0.55s cubic-bezier(0.3, 0.9, 0.3, 1);
+}
+.seat-eq b {
+  font-size: calc(var(--u) * 1.7);
+  font-variant-numeric: tabular-nums;
+  color: #dfe8e2;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+  min-width: calc(var(--u) * 4.2);
+}
+.seat-eq.lead b {
+  color: var(--gold);
+}
+.seat-eq.lead .seat-eq-bar {
+  border-color: rgba(242, 193, 78, 0.65);
+  box-shadow: 0 0 calc(var(--u) * 1.2) rgba(242, 193, 78, 0.45);
+}
+
+.is-paused .allin-banner {
+  animation-play-state: paused;
+}

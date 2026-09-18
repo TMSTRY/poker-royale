@@ -10,6 +10,7 @@ import {
   collectBets,
   handEndedByFolds,
   heroHandName,
+  isRunout,
   legal,
   livePlayers,
   newGame,
@@ -20,7 +21,7 @@ import {
 } from "@/lib/engine";
 import { BotInsight, botDecide, botDelay } from "@/lib/ai";
 import { cardLabel, describeHole } from "@/lib/cards";
-import { equity } from "@/lib/equity";
+import { equity, runoutEquities } from "@/lib/equity";
 import { ChatCtx, chatterFor } from "@/lib/chatter";
 import { CoachNote, Decision, coachNote } from "@/lib/coach";
 import { dailySeed } from "@/lib/rng";
@@ -101,6 +102,7 @@ export default function PokerTable() {
   const [auto, setAuto] = useState<"off" | "checkfold" | "callany">("off");
   const [copied, setCopied] = useState(false);
   const [paused, setPaused] = useState(false);
+  const [runoutEq, setRunoutEq] = useState<Record<number, number> | null>(null);
 
   const areaRef = useRef<HTMLDivElement | null>(null);
   const tableRef = useRef<HTMLDivElement | null>(null);
@@ -115,10 +117,33 @@ export default function PokerTable() {
   const statHand = useRef(0);
   const statGame = useRef(false);
   const chatKey = useRef(1);
+  const runoutSeenRef = useRef("");
 
   const seatPos = useMemo(() => seatPositions(portrait), [portrait]);
   const betPos = useMemo(() => betPositions(seatPos), [seatPos]);
   const sp = settings.speed;
+  /** Er valt niets meer te beslissen: kaarten open, board rolt uit. */
+  const runout =
+    started &&
+    (game.stage === "preflop" ||
+      game.stage === "flop" ||
+      game.stage === "turn" ||
+      game.stage === "river" ||
+      game.stage === "showdown") &&
+    isRunout(game);
+
+  const eqLeader = useMemo(() => {
+    if (!runoutEq) return null;
+    let bestId: number | null = null;
+    let best = -1;
+    for (const [id, v] of Object.entries(runoutEq)) {
+      if (v > best) {
+        best = v;
+        bestId = Number(id);
+      }
+    }
+    return bestId;
+  }, [runoutEq]);
 
   /* ---------- opstart ---------- */
 
@@ -211,7 +236,8 @@ export default function PokerTable() {
     }
 
     if (s.stage === "showdown") {
-      const t = setTimeout(() => setGame((g) => resolve(g)), 500 / sp);
+      const runout = runoutSeenRef.current === `${s.handNo}:runout`;
+      const t = setTimeout(() => setGame((g) => resolve(g)), runout ? 1400 : 500 / sp);
       return () => clearTimeout(t);
     }
 
@@ -233,8 +259,17 @@ export default function PokerTable() {
 
     const p = s.players[s.turn];
     if (!p) {
-      // niemand kan nog inzetten: kaarten uitdelen tot de river
-      const t = setTimeout(() => setGame((g) => advanceStreet(collectBets(g))), 900 / sp);
+      // Niemand kan nog inzetten. Dit is het all-in moment: kaarten liggen open
+      // en het board rolt langzaam uit, met een extra beat aan het begin zodat
+      // je de handen en de winkansen kunt zien landen.
+      const key = `${s.handNo}:runout`;
+      const first = runoutSeenRef.current !== key;
+      if (first) runoutSeenRef.current = key;
+      const drama = Math.min(sp, 1.25);
+      const t = setTimeout(
+        () => setGame((g) => advanceStreet(collectBets(g))),
+        (first ? 2400 : 1700) / drama
+      );
       return () => clearTimeout(t);
     }
     if (p.human) return; // wachten op de speler
@@ -446,6 +481,34 @@ export default function PokerTable() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [started, game.turn, game.handNo, game.board.length, game.stage]);
 
+  /* ---------- winkansen tijdens een all-in uitrol ---------- */
+
+  useEffect(() => {
+    if (!runout) {
+      setRunoutEq(null);
+      return;
+    }
+    const live = livePlayers(game).filter((p) => p.hole.length === 2);
+    if (live.length < 2) {
+      setRunoutEq(null);
+      return;
+    }
+    // in een timeout, zodat de nieuwe kaart eerst nog netjes op het scherm komt
+    const id = window.setTimeout(() => {
+      const eqs = runoutEquities(
+        live.map((p) => p.hole),
+        game.board
+      );
+      const map: Record<number, number> = {};
+      live.forEach((p, i) => {
+        map[p.id] = eqs[i];
+      });
+      setRunoutEq(map);
+    }, 30);
+    return () => window.clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [runout, game.handNo, game.board.length, game.stage]);
+
   /* ---------- korte stack onthouden (voor de comeback-prestatie) ---------- */
 
   useEffect(() => {
@@ -653,6 +716,7 @@ export default function PokerTable() {
   const lvl = blinds(game.level);
   const madeHand = heroHandName(game);
   const revealAll = game.stage === "handover" && !!game.outcome?.showdown;
+
   const handsToLevel = game.config.handsPerLevel - ((game.handNo - 1) % game.config.handsPerLevel);
 
   const shareText = useMemo(() => buildShare(game, tier, isDaily), [game, tier, isDaily]);
@@ -782,6 +846,18 @@ export default function PokerTable() {
             {game.stage === "handover" && game.outcome && (
               <div className="banner">{game.outcome.headline}</div>
             )}
+            {runout && game.stage !== "handover" && (
+              <div className="allin-banner">
+                ALL-IN
+                <em>
+                  {game.board.length >= 5
+                    ? "kaarten op tafel"
+                    : `nog ${5 - game.board.length} kaart${
+                        5 - game.board.length === 1 ? "" : "en"
+                      }`}
+                </em>
+              </div>
+            )}
           </div>
 
           {game.players.map((p, i) =>
@@ -819,12 +895,14 @@ export default function PokerTable() {
               pos={seatPos[i]}
               isTurn={game.turn === i && game.stage !== "handover"}
               isDealer={game.dealer === i}
-              revealCards={revealAll && !p.folded}
+              revealCards={(revealAll || runout) && !p.folded && !p.out}
               isWinner={game.winnerIds.includes(p.id)}
               highlight={game.highlight}
               dealToken={game.handNo}
               thinkMs={p.human ? 0 : thinkMs}
               says={chatter && chatter.id === p.id ? chatter.text : null}
+              equity={runout && runoutEq ? runoutEq[p.id] ?? null : null}
+              eqLead={eqLeader === p.id}
             />
           ))}
         </div>

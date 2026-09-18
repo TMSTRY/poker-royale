@@ -15,6 +15,10 @@ type Props = {
   thinkMs: number;
   /** tafelpraat van deze speler, of null */
   says: string | null;
+  /** live winkans tijdens een all-in uitrol, of null */
+  equity?: number | null;
+  /** staat deze speler op dat moment voor? */
+  eqLead?: boolean;
 };
 
 export default function Seat({
@@ -28,6 +32,8 @@ export default function Seat({
   dealToken,
   thinkMs,
   says,
+  equity = null,
+  eqLead = false,
 }: Props) {
   const showFace = p.human || revealCards;
   const cls = [
@@ -81,6 +87,15 @@ export default function Seat({
           </div>
         )}
       </div>
+
+      {equity != null && (
+        <div className={`seat-eq ${eqLead ? "lead" : ""}`}>
+          <span className="seat-eq-bar">
+            <span style={{ width: `${Math.max(2, Math.round(equity * 100))}%` }} />
+          </span>
+          <b>{Math.round(equity * 100)}%</b>
+        </div>
+      )}
 
       {says && (
         <div className="seat-says" key={says}>
