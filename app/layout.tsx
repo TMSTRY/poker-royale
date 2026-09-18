@@ -2,12 +2,12 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Poker Royale — Texas Hold'em",
+  title: "Poker Royale · Texas Hold'em",
   description:
     "Speel Texas Hold'em tegen vijf eigenzinnige bots. Toernooiformat, stijgende blinds, echte pot-odds. Winner takes all.",
   applicationName: "Poker Royale",
   openGraph: {
-    title: "Poker Royale — Texas Hold'em",
+    title: "Poker Royale · Texas Hold'em",
     description: "Toernooipoker tegen vijf bots. Winner takes all.",
     type: "website",
   },

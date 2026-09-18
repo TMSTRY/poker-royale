@@ -936,7 +936,7 @@ export default function PokerTable() {
             {hero.out ? (
               <span className="muted">Uitgeschakeld</span>
             ) : hero.folded ? (
-              <span className="muted">Gefold — volgende hand</span>
+              <span className="muted">Gefold · volgende hand</span>
             ) : madeHand ? (
               <>
                 <span className="dock-label">Jouw hand</span>
@@ -1100,7 +1100,7 @@ export default function PokerTable() {
                   {!isDaily && payout(tier, hero.place ?? 6) > 0 && (
                     <>
                       {" "}
-                      — dat is nog <b>{nf(payout(tier, hero.place ?? 6))}</b> prijzengeld
+                      , goed voor nog <b>{nf(payout(tier, hero.place ?? 6))}</b> prijzengeld
                     </>
                   )}
                   .
@@ -1167,7 +1167,7 @@ function catFromName(name: string): number {
 function buildShare(g: GameState, tier: Tier, daily: boolean): string | null {
   if (g.stage !== "handover" || !g.outcome) return null;
   const lines: string[] = [];
-  lines.push(`♠ POKER ROYALE — ${daily ? "dagchallenge" : tier.name}, hand ${g.handNo}`);
+  lines.push(`♠ POKER ROYALE · ${daily ? "dagchallenge" : tier.name}, hand ${g.handNo}`);
   if (g.board.length) lines.push(`Board: ${g.board.map(cardLabel).join(" ")}`);
   for (const p of g.players) {
     if (p.out || p.folded) continue;
@@ -1175,7 +1175,7 @@ function buildShare(g: GameState, tier: Tier, daily: boolean): string | null {
     if (!shown || p.hole.length < 2) continue;
     const h = g.outcome.hands[p.id];
     lines.push(
-      `${p.human ? "Jij" : p.name}: ${p.hole.map(cardLabel).join(" ")}${h ? ` — ${h.name}` : ""}`
+      `${p.human ? "Jij" : p.name}: ${p.hole.map(cardLabel).join(" ")}${h ? ` · ${h.name}` : ""}`
     );
   }
   lines.push(g.outcome.headline);

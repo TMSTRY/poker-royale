@@ -77,7 +77,7 @@ export default function SettingsFields({ settings, onChange }: Props) {
         />
         <span>
           <b>Winkans tonen</b>
-          <small>Live percentage tijdens jouw beurt — makkelijker, maar minder spannend</small>
+          <small>Live percentage tijdens jouw beurt. Makkelijker, maar minder spannend</small>
         </span>
       </label>
 

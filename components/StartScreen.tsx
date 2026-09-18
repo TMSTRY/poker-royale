@@ -125,7 +125,7 @@ export default function StartScreen({
                     </small>
                   </span>
                   <span className="tier-go">
-                    {!open ? "🔒" : !afford ? "—" : "▶"}
+                    {!open ? "🔒" : !afford ? "✕" : "▶"}
                   </span>
                 </button>
               );
@@ -142,7 +142,7 @@ export default function StartScreen({
                   Dagchallenge
                   {dailyDone && <em className="tier-badge">gespeeld</em>}
                 </b>
-                <small>{dailyLabel()} — vandaag deelt iedereen dezelfde kaarten</small>
+                <small>{dailyLabel()} · vandaag deelt iedereen dezelfde kaarten</small>
                 <small className="tier-nums">
                   gratis ·{" "}
                   {progress.daily?.seed === seed

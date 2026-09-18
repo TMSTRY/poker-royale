@@ -103,7 +103,7 @@ export function coachNote(decisions: Decision[]): CoachNote | null {
           tone: "info",
           text: `Je verhoogde op ${s} met ${pct(
             d.eq
-          )} winkans — een bluff dus. Die werkt zolang je hem niet te vaak laat zien.`,
+          )} winkans. Dat was dus een bluf, en die werkt zolang je hem niet te vaak laat zien.`,
         },
       });
     }
@@ -113,7 +113,7 @@ export function coachNote(decisions: Decision[]): CoachNote | null {
         sev: 1.0,
         note: {
           tone: "good",
-          text: `All-in op ${s} met ${pct(d.eq)} winkans — precies waarvoor je stack bedoeld is.`,
+          text: `All-in op ${s} met ${pct(d.eq)} winkans. Precies waarvoor je stack bedoeld is.`,
         },
       });
     }

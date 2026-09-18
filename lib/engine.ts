@@ -380,7 +380,7 @@ export function startHand(prev: GameState): GameState {
   s.turn = nextIdx(s, bbIdx, canAct);
   if (s.turn === -1) s.turn = -1;
 
-  pushLog(s, `— Hand ${s.handNo} · blinds ${sb}/${bb} —`, "street");
+  pushLog(s, `Hand ${s.handNo} · blinds ${sb}/${bb}`, "street");
   return s;
 }
 
@@ -677,7 +677,7 @@ export function resolve(prev: GameState): GameState {
   const mainWinner = s.players.find((p) => p.id === winnerIds[0]);
   let headline: string;
   if (!showdown) {
-    headline = `${mainWinner?.name ?? "?"} wint de pot — iedereen foldde.`;
+    headline = `${mainWinner?.name ?? "?"} wint de pot, iedereen foldde.`;
   } else if (winnerIds.length > 1) {
     headline = `Split pot: ${winnerIds
       .map((id) => s.players.find((p) => p.id === id)?.name)
