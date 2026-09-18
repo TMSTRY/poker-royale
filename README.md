@@ -58,6 +58,19 @@ gewonnen niveaus en 15 prestaties staan in localStorage. De dagchallenge leidt
 de shuffle af van de datum, dus iedereen speelt vandaag dezelfde kaarten; het
 resultaat is met één klik te kopiëren.
 
+**All-in showdown**
+Zodra er niets meer te beslissen valt draaien alle kaarten open, komt er een
+ALL-IN banner met hoeveel kaarten er nog moeten en krijgt elke speler een
+winkansbalk in zijn naambalk. Het board rolt trager uit zodat je de balk ziet
+verspringen; wie voorstaat kleurt goud.
+
+`runoutEquities()` telt exact uit zodra alle handen bekend zijn: met één kaart
+te gaan alle 44 mogelijkheden, met twee alle 990. Alleen bij een preflop all-in
+(vijf kaarten) wordt er geschat met 2.000 trekkingen. Gecontroleerd tegen
+bekende waarden: AhQd tegen Kd5c op 2h 7d Kc Js geeft exact 7/44 = 15,91%,
+een board dat voor beiden speelt exact 50/50, en AA tegen KK 81,7% tegen de
+boekwaarde van 81,9%.
+
 **Presentatie**
 - Kaarten in pure CSS: rang in beide hoeken, één grote suit in het midden en een
   dunne binnenlijn. Bewust géén volledig pip-raster — op tafelformaat wordt dat
@@ -73,7 +86,7 @@ resultaat is met één klik te kopiëren.
 
 **Bediening en comfort**
 - Instelbaar tempo (traag / normaal / snel) en een bedenktijdklok (uit / 30s / 15s)
-- Pauzeknop die alles stilzet: bots, straten, de volgende hand en de klok
+- Pauzeknop (spatie) die alles stilzet: bots, straten, de volgende hand en de klok
 - Check/Fold en Call any vooraf aanvinken terwijl de bots nog denken
 - Pot odds bij de callknop, je actuele hand in beeld, winreeks- en blindteller
 - Hand kopiëren naar het klembord om te delen
