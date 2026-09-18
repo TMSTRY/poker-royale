@@ -1937,14 +1937,14 @@ kbd {
 .seat-eq {
   display: flex;
   align-items: center;
-  gap: calc(var(--u) * 0.6);
-  margin-top: calc(var(--u) * 0.25);
+  gap: calc(var(--u) * 0.5);
+  margin-top: calc(var(--u) * 0.3);
   animation: bubbleIn 0.3s cubic-bezier(0.2, 1.3, 0.3, 1) both;
 }
 .seat-eq-bar {
   display: block;
-  width: calc(var(--u) * 9);
-  height: calc(var(--u) * 0.85);
+  width: calc(var(--u) * 5.4);
+  height: calc(var(--u) * 0.8);
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.55);
   border: 1px solid rgba(255, 255, 255, 0.18);
@@ -1958,11 +1958,11 @@ kbd {
   transition: width 0.55s cubic-bezier(0.3, 0.9, 0.3, 1);
 }
 .seat-eq b {
-  font-size: calc(var(--u) * 1.7);
+  font-size: calc(var(--u) * 1.5);
   font-variant-numeric: tabular-nums;
   color: #dfe8e2;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
-  min-width: calc(var(--u) * 4.2);
+  min-width: calc(var(--u) * 3.8);
 }
 .seat-eq.lead b {
   color: var(--gold);

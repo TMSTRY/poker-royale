@@ -80,6 +80,14 @@ export default function Seat({
           <div className="seat-chips">
             {p.out ? "uit" : p.chips.toLocaleString("nl-BE")}
           </div>
+          {equity != null && (
+            <div className={`seat-eq ${eqLead ? "lead" : ""}`}>
+              <span className="seat-eq-bar">
+                <span style={{ width: `${Math.max(2, Math.round(equity * 100))}%` }} />
+              </span>
+              <b>{Math.round(equity * 100)}%</b>
+            </div>
+          )}
         </div>
         {isTurn && (
           <div className="seat-timer">
@@ -87,15 +95,6 @@ export default function Seat({
           </div>
         )}
       </div>
-
-      {equity != null && (
-        <div className={`seat-eq ${eqLead ? "lead" : ""}`}>
-          <span className="seat-eq-bar">
-            <span style={{ width: `${Math.max(2, Math.round(equity * 100))}%` }} />
-          </span>
-          <b>{Math.round(equity * 100)}%</b>
-        </div>
-      )}
 
       {says && (
         <div className="seat-says" key={says}>
